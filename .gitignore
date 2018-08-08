@@ -6,3 +6,7 @@ Cargo.lock
 # JetBrains
 .idea/
 *.iml
+
+# Patch DLLs and executables
+data/patch/*.dll
+data/patch/*.exe
