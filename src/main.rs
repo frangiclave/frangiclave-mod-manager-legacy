@@ -1,9 +1,22 @@
+#[macro_use]
+extern crate lazy_static;
+
+extern crate clap;
+extern crate fs_extra;
+extern crate regex;
+extern crate reqwest;
+extern crate semver;
+extern crate serde_json;
 extern crate tempdir;
+extern crate tokio;
+extern crate zip;
 
 mod game;
 mod patch;
+mod repo;
 
-use game::Game;
+use game::{Game, ModDependency};
+use repo::Repo;
 use std::io::{Read, Write};
 use std::path::PathBuf;
 
@@ -17,11 +30,23 @@ const LOGO: &'static str = r#"
 "#;
 
 fn main() {
+    // Parse the command-line arguments
+    let arguments = clap::App::new("Frangiclave")
+        .arg(
+            clap::Arg::with_name("game_directory")
+                .short("g")
+                .long("game_directory")
+                .value_name("GAME_DIRECTORY")
+                .help("Sets the location of the game directory")
+                .takes_value(true),
+        )
+        .get_matches();
+    let game_directory = arguments.value_of("game_directory").unwrap_or(".");
     show_welcome_message();
 
     // Load the game directory information, checking if the working directory is a valid game
     // directory first.
-    let game = Game::new(&PathBuf::from("."));
+    let game = Game::new(&PathBuf::from(game_directory));
     if !game.is_valid() {
         eprintln!(
             "ERROR: Cultist Simulator not detected in working directory. This program must be run \
@@ -55,15 +80,16 @@ fn command_loop(game: &Game) {
         stdout.flush().unwrap();
         let mut command = String::new();
         stdin.read_line(&mut command).unwrap();
-        match command.trim() {
+        command = command.trim().to_string();
+        match &command[..1] {
             "p" => patch_game(game),
-            "i" => install_mod(),
+            "i" => install_mod(game, command.as_ref()),
             "u" => update_mods(),
             "r" => remove_mod(),
             "x" => break,
             _ => eprintln!(
                 "Invalid command name '{}', must be one of the following: p, i, u, r, x",
-                command.trim()
+                command
             ),
         }
         println!();
@@ -95,8 +121,27 @@ fn patch_game(game: &Game) {
     println!("Patch successful.")
 }
 
-fn install_mod() {
-    println!("Installing mods is not implemented yet.");
+fn install_mod(game: &Game, command: &str) {
+    // Get the mod ID as the only argument
+    let args: Vec<&str> = command.split(' ').collect();
+    if args.len() != 2 {
+        eprintln!("Invalid number of arguments specified. Usage: i <mod_id>");
+        return;
+    }
+    let mod_dependency = args[1];
+
+    // Initialize the repo and install the mod for it
+    let repo = match Repo::new() {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("Failed to create prepare repository: {}", e);
+            return;
+        }
+    };
+    match repo.install_mod(game, &ModDependency::parse(mod_dependency)) {
+        Ok(_) => println!("Successfully installed mod {}", mod_dependency),
+        Err(e) => eprintln!("There was an error installing the mod: {}", e),
+    };
 }
 
 fn update_mods() {
