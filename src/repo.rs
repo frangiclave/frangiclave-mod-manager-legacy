@@ -1,7 +1,8 @@
 use fs_extra::dir;
 use fs_extra::dir::CopyOptions;
 use reqwest;
-use reqwest::StatusCode;
+use reqwest::{Response, StatusCode};
+use semver::Version;
 use std::fs;
 use std::fs::File;
 use std::io;
@@ -12,6 +13,11 @@ use zip::ZipArchive;
 use game::{Game, Mod, ModDependency, ModDependencyOperator};
 
 const DEFAULT_MOD_REPOSITORY_URL: &'static str = "http://mods.thefansus.com/downloads";
+
+#[derive(Deserialize)]
+struct RepoModVersions {
+    versions: Vec<String>,
+}
 
 pub struct Repo {
     temp_dir: TempDir,
@@ -75,12 +81,68 @@ impl Repo {
             }
             None => (), // Mod is not installed, download it
         }
-        let version = "1.0.0"; // TODO Get best matching version
+
+        // Download a list of available versions
+        let versions_url = format!("{0}/{1}/{2}", self.url, dependency.id, "versions.json");
+        let available_versions_str: Vec<String> = match get_url(&versions_url) {
+            Ok(mut response) => {
+                let versions: RepoModVersions = response.json().unwrap();
+                versions.versions
+            }
+            Err(e) => return Err(format!("Request to repository failed: {}", e)),
+        };
+        let mut available_versions: Vec<Version> = available_versions_str
+            .iter()
+            .map(|v| Version::parse(v).unwrap())
+            .collect();
+        available_versions.sort_unstable();
+        let version: String = match &dependency.operator {
+            Some(op) => {
+                let dependency_version = dependency.version.clone().unwrap();
+                let chosen_version = match op {
+                    ModDependencyOperator::LessThan => {
+                        get_chosen_version(&available_versions, dependency_version, |v1, v2| {
+                            v1 < v2
+                        })
+                    }
+                    ModDependencyOperator::LessThanOrEqual => {
+                        get_chosen_version(&available_versions, dependency_version, |v1, v2| {
+                            v1 <= v2
+                        })
+                    }
+                    ModDependencyOperator::GreaterThan => {
+                        get_chosen_version(&available_versions, dependency_version, |v1, v2| {
+                            v1 > v2
+                        })
+                    }
+                    ModDependencyOperator::GreaterThanOrEqual => {
+                        get_chosen_version(&available_versions, dependency_version, |v1, v2| {
+                            v1 >= v2
+                        })
+                    }
+                    ModDependencyOperator::Equal => {
+                        get_chosen_version(&available_versions, dependency_version, |v1, v2| {
+                            v1 == v2
+                        })
+                    }
+                };
+                match chosen_version {
+                    Some(version) => version.to_string(),
+                    None => {
+                        return Err(format!(
+                            "No valid version found of mod '{}'",
+                            &dependency.id
+                        ))
+                    }
+                }
+            }
+            None => available_versions.last().unwrap().to_string(),
+        };
 
         // Download the requested mod's ZIP file
         let mod_zip = format!("{0}-{1}.zip", dependency.id, version);
         let mod_url = format!("{0}/{1}/{2}", self.url, dependency.id, &mod_zip);
-        let mod_zip_file = match get_url(&mod_url, &self.temp_dir.path().join(&mod_zip)) {
+        let mod_zip_file = match get_url_to_file(&mod_url, &self.temp_dir.path().join(&mod_zip)) {
             Ok(f) => f,
             Err(e) => return Err(format!("Request to repository failed: {}", e)),
         };
@@ -121,6 +183,32 @@ impl Repo {
     }
 }
 
+fn get_chosen_version<F>(
+    available_versions: &Vec<Version>,
+    dependency_version: Version,
+    comparator: F,
+) -> Option<Version>
+where
+    F: Fn(&Version, &Version) -> bool,
+{
+    let mut candidate_version: Option<Version> = None;
+    for version in available_versions {
+        if !comparator(version, &dependency_version) {
+            continue;
+        }
+        candidate_version = candidate_version
+            .map(|v| {
+                if comparator(&v, version) {
+                    version.clone()
+                } else {
+                    v
+                }
+            })
+            .or_else(|| Some(version.clone()));
+    }
+    candidate_version
+}
+
 fn unzip_mod(file: &File, output_dir: &Path, mod_id: &str) -> Mod {
     let mut archive = ZipArchive::new(file).unwrap();
 
@@ -146,7 +234,34 @@ fn unzip_mod(file: &File, output_dir: &Path, mod_id: &str) -> Mod {
     Mod::new(&output_dir.join(mod_id))
 }
 
-fn get_url(url: &str, output_path: &Path) -> Result<File, String> {
+fn get_url_to_file(url: &str, output_path: &Path) -> Result<File, String> {
+    let mut response = get_url(url)?;
+
+    // Download the ZIP file to the output path
+    match response.status() {
+        StatusCode::Ok => (),
+        _ => return Err(format!("Failed to fetch '{}'", url)),
+    }
+    let mut output_file = match File::create(output_path) {
+        Ok(mut f) => f,
+        Err(e) => {
+            return Err(format!(
+                "Failed to create file '{}': {}",
+                output_path.display(),
+                e
+            ))
+        }
+    };
+    match io::copy(&mut response, &mut output_file) {
+        Ok(_) => Ok(File::open(output_path).unwrap()),
+        Err(e) => Err(format!(
+            "Failed to download response body for '{}': {}",
+            url, e
+        )),
+    }
+}
+
+fn get_url(url: &str) -> Result<Response, String> {
     // Build our own client to work around a bug with GZIP in the library
     // See: https://github.com/seanmonstar/reqwest/issues/328
     let request = reqwest::ClientBuilder::new()
@@ -158,29 +273,10 @@ fn get_url(url: &str, output_path: &Path) -> Result<File, String> {
 
     // Download the ZIP file to the output path
     match request {
-        Ok(mut response) => {
-            match response.status() {
-                StatusCode::Ok => (),
-                _ => return Err(format!("Failed to fetch '{}'", url)),
-            }
-            let mut output_file = match File::create(output_path) {
-                Ok(mut f) => f,
-                Err(e) => {
-                    return Err(format!(
-                        "Failed to create file '{}': {}",
-                        output_path.display(),
-                        e
-                    ))
-                }
-            };
-            match io::copy(&mut response, &mut output_file) {
-                Ok(_) => Ok(File::open(output_path).unwrap()),
-                Err(e) => Err(format!(
-                    "Failed to download response body for '{}': {}",
-                    url, e
-                )),
-            }
-        }
+        Ok(response) => match response.status() {
+            StatusCode::Ok => Ok(response),
+            _ => Err(format!("Failed to fetch '{}'", url)),
+        },
         Err(e) => Err(format!("Failed to fetch '{}': {}", url, e)),
     }
 }

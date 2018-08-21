@@ -1,11 +1,15 @@
 #[macro_use]
 extern crate lazy_static;
 
+#[macro_use]
+extern crate serde_derive;
+
 extern crate clap;
 extern crate fs_extra;
 extern crate regex;
 extern crate reqwest;
 extern crate semver;
+extern crate serde;
 extern crate serde_json;
 extern crate tempdir;
 extern crate tokio;
@@ -81,16 +85,19 @@ fn command_loop(game: &Game) {
         let mut command = String::new();
         stdin.read_line(&mut command).unwrap();
         command = command.trim().to_string();
-        match &command[..1] {
-            "p" => patch_game(game),
-            "i" => install_mod(game, command.as_ref()),
-            "u" => update_mods(),
-            "r" => remove_mod(),
-            "x" => break,
-            _ => eprintln!(
-                "Invalid command name '{}', must be one of the following: p, i, u, r, x",
-                command
-            ),
+        match command.chars().next() {
+            Some(c) => match c {
+                'p' => patch_game(game),
+                'i' => install_mod(game, command.as_ref()),
+                'u' => update_mods(),
+                'r' => remove_mod(),
+                'x' => break,
+                _ => eprintln!(
+                    "Invalid command name '{}', must be one of the following: p, i, u, r, x",
+                    command
+                ),
+            },
+            None => (),
         }
         println!();
     }
@@ -138,8 +145,15 @@ fn install_mod(game: &Game, command: &str) {
             return;
         }
     };
-    match repo.install_mod(game, &ModDependency::parse(mod_dependency)) {
-        Ok(_) => println!("Successfully installed mod {}", mod_dependency),
+    let dependency = match ModDependency::parse(mod_dependency) {
+        Ok(d) => d,
+        Err(e) => {
+            eprintln!("Invalid dependency specifier: {}", e);
+            return;
+        }
+    };
+    match repo.install_mod(game, &dependency) {
+        Ok(_) => println!("Successfully installed {}", mod_dependency),
         Err(e) => eprintln!("There was an error installing the mod: {}", e),
     };
 }

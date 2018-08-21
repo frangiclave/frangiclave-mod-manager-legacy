@@ -145,7 +145,7 @@ impl Mod {
                 .as_array()
                 .unwrap()
                 .iter()
-                .map(|dependency| ModDependency::parse(dependency.as_str().unwrap()))
+                .map(|dependency| ModDependency::parse(dependency.as_str().unwrap()).unwrap())
                 .collect(),
         }
     }
@@ -170,12 +170,12 @@ impl ModDependency {
         }
     }
 
-    pub fn parse(dependency_string: &str) -> ModDependency {
+    pub fn parse(dependency_string: &str) -> Result<ModDependency, String> {
         lazy_static! {
             static ref VERSION_REGEX: Regex = Regex::new(MOD_DEPENDENCY_VERSION).unwrap();
         }
         let captures = VERSION_REGEX.captures(dependency_string).unwrap();
-        ModDependency::new(
+        Ok(ModDependency::new(
             captures.get(1).unwrap().as_str().to_string(),
             match captures.get(2) {
                 Some(op) => Some(match op.as_str() {
@@ -189,10 +189,13 @@ impl ModDependency {
                 None => None,
             },
             match captures.get(3) {
-                Some(version) => Some(Version::parse(version.as_str()).unwrap()),
+                Some(version) => Some(match Version::parse(version.as_str()) {
+                    Ok(v) => v,
+                    Err(e) => return Err(format!("Invalid version specifier: {}", e)),
+                }),
                 None => None,
             },
-        )
+        ))
     }
 }
 
