@@ -2,6 +2,8 @@ use std::fs;
 use std::fs::File;
 use std::io;
 use std::io::prelude::*;
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use tempdir::TempDir;
 
@@ -61,5 +63,17 @@ pub fn setup_patch_directory(managed_path: &Path) -> io::Result<TempDir> {
         f.sync_all()?;
     }
 
+    // Make MonoMod executable for non-Windows systems
+    #[cfg(unix)]
+    make_monomod_executable(&dir.path().join("MonoMod.exe"))?;
+
     Ok(dir)
+}
+
+#[cfg(unix)]
+fn make_monomod_executable(monomod_exe_path: &Path) -> io::Result<()> {
+    let mut mm_permissions = fs::metadata(monomod_exe_path)?.permissions();
+    mm_permissions.set_mode(0o755);
+    fs::set_permissions(monomod_exe_path, mm_permissions)?;
+    Ok(())
 }
