@@ -9,12 +9,17 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::str;
 
-const EXE_PATH: &'static str = "cultistsimulator.exe";
-const MANAGED_PATH: &'static str = "cultistsimulator_Data/Managed";
-const ASSEMBLY_PATH: &'static str = "cultistsimulator_Data/Managed/Assembly-CSharp.dll";
-const ASSEMBLY_BACKUP_PATH: &'static str =
-    "cultistsimulator_Data/Managed/Assembly-CSharp-backup.dll";
-const MODS_PATH: &'static str = "cultistsimulator_Data/StreamingAssets/mods";
+const WINDOWS_EXE_PATH: &'static str = "cultistsimulator.exe";
+const MACOS_EXE_PATH: &'static str = "Contents/MacOS/OSX";
+const LINUX_EXE_PATH: &'static str = "CS.x86_64";
+const WINDOWS_DATA_PATH: &'static str = "cultistsimulator_Data/";
+const MACOS_DATA_PATH: &'static str = "Contents/Resources/Data/";
+const LINUX_DATA_PATH: &'static str = "CS.x86_64_Data/";
+
+const MANAGED_PATH: &'static str = "Managed/";
+const ASSEMBLY_PATH: &'static str = "Managed/Assembly-CSharp.dll";
+const ASSEMBLY_BACKUP_PATH: &'static str = "Managed/Assembly-CSharp-backup.dll";
+const MODS_PATH: &'static str = "StreamingAssets/mods";
 
 const MOD_DEPENDENCY_VERSION: &'static str = r"^\s*(\w+)(?:\s*(<=|<|>=|>|==)\s*([\d.]+))?\s*$";
 
@@ -28,12 +33,26 @@ pub struct Game {
 
 impl Game {
     pub fn new(root: &PathBuf) -> Game {
+        let exe_path;
+        let data_path;
+        if cfg!(all(target_os="windows", target_arch="x86_64")) {
+            exe_path = root.join(WINDOWS_EXE_PATH);
+            data_path = root.join(WINDOWS_DATA_PATH);
+        } else if cfg!(all(target_os="macos", target_arch="x86_64")) {
+            exe_path = root.join(MACOS_EXE_PATH);
+            data_path = root.join(MACOS_DATA_PATH);
+        } else if cfg!(all(target_os="linux", target_arch="x86_64")) {
+            exe_path = root.join(LINUX_EXE_PATH);
+            data_path = root.join(LINUX_DATA_PATH);
+        } else {
+            panic!("Invalid target os or architecture");
+        }
         Game {
-            exe_path: root.join(EXE_PATH),
-            managed_path: root.join(MANAGED_PATH),
-            assembly_path: root.join(ASSEMBLY_PATH),
-            assembly_backup_path: root.join(ASSEMBLY_BACKUP_PATH),
-            mods_path: root.join(MODS_PATH),
+            exe_path,
+            managed_path: data_path.join(MANAGED_PATH),
+            assembly_path: data_path.join(ASSEMBLY_PATH),
+            assembly_backup_path: data_path.join(ASSEMBLY_BACKUP_PATH),
+            mods_path: data_path.join(MODS_PATH),
         }
     }
 
