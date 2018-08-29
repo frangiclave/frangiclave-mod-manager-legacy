@@ -100,7 +100,14 @@ impl Game {
         }
 
         // Prepare the patch directory for copy back to the game directory.
-        fs::remove_file(dir.path().join("MONOMODDED_Assembly-CSharp.pdb")).unwrap();
+        let pdb_path = dir.path().join("MONOMODDED_Assembly-CSharp.pdb");
+        let mdb_path = dir.path().join("MONOMODDED_Assembly-CSharp.mdb");
+        if pdb_path.exists() {
+            fs::remove_file(pdb_path).unwrap();
+        }
+        if mdb_path.exists() {
+            fs::remove_file(mdb_path).unwrap();
+        }
         fs::remove_file(dir.path().join("Assembly-CSharp.FrangiclavePatch.mm.dll")).unwrap();
         fs::rename(
             dir.path().join("MONOMODDED_Assembly-CSharp.dll"),
