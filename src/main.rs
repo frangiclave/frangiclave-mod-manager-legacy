@@ -12,7 +12,6 @@ extern crate semver;
 extern crate serde;
 extern crate serde_json;
 extern crate tempdir;
-extern crate tokio;
 extern crate zip;
 
 mod game;
