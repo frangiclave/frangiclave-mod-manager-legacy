@@ -83,6 +83,7 @@ impl Game {
 
         // Run MonoMod to patch the clean assembly.
         match Command::new(dir.path().join("MonoMod.exe"))
+            .arg("--dependency-missing-throw=0")
             .arg("Assembly-CSharp.dll")
             .current_dir(dir.path())
             .output()
