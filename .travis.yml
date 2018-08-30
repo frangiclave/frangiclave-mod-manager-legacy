@@ -12,15 +12,15 @@ matrix:
       env: TARGET=x86_64-apple-darwin
 
 before_install:
-- sh ci/before_install.sh
+- bash ci/before_install.sh
 
 install:
-  - sh ci/install.sh
+  - bash ci/install.sh
 
 script: true
 
 before_deploy:
-  - sh ci/before_deploy.sh
+  - bash ci/before_deploy.sh
 
 cache: cargo
 before_cache:
