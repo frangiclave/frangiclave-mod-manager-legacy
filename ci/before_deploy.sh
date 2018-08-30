@@ -2,10 +2,16 @@
 
 set -e
 
-export BUILD_DIR=/tmp/frangiclave-build
-
-export MM_DIR=$(PWD)
+# Try to find the source used for this deploy
+if [ -z ${TRAVIS_BUILD_DIR+x} ]
+then
+    export MM_DIR=$(PWD)
+else
+    export MM_DIR=${TRAVIS_BUILD_DIR}
+fi
 export MM_PATCH_DIR=${MM_DIR}/data/patch
+
+export BUILD_DIR=/tmp/frangiclave-build
 
 export MONOMOD_DIR=${BUILD_DIR}/MonoMod
 export MONOMOD_BIN_DIR=${MONOMOD_DIR}/MonoMod/bin/Release

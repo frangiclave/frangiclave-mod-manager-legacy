@@ -5,31 +5,31 @@ git:
 
 matrix:
   include:
-  - os: linux
-    dist: trusty
-    env: TARGET=x86_64-unknown-linux-gnu
-  - os: osx
-    env: TARGET=x86_64-apple-darwin
+    - os: linux
+      dist: trusty
+      env: TARGET=x86_64-unknown-linux-gnu
+    - os: osx
+      env: TARGET=x86_64-apple-darwin
 
 before_install:
 - sh ci/before_install.sh
 
 install:
-- sh ci/install.sh
+  - sh ci/install.sh
 
 script: true
 
 before_deploy:
-- sh ci/before_deploy.sh
+  - sh ci/before_deploy.sh
 
 cache: cargo
 before_cache:
-- chmod -R a+r $HOME/.cargo
+  - chmod -R a+r $HOME/.cargo
 
 branches:
   only:
-  - master
-  - "/^v\\d+\\.\\d+\\.\\d+.*$/"
+    - master
+    - "/^v\\d+\\.\\d+\\.\\d+.*$/"
 
 deploy:
   provider: releases
