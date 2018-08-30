@@ -36,7 +36,7 @@ deploy:
   api_key:
     secure: Bd6OXZke3ECyY41uLzojAz+loTf8aEODBjSZHEeub1DGdqXtsQIpcAP64WwpRR+QBPeIlyHm1cmwTaQG2stQd87K3HJS7cXjbermwqZ2M8L+g05lmGj6eMuTUOUSqqiKZTYqcRJHp70scTQzN/MEVcsNs53axLQ8r1lnq8Jv2udnBs25InznfbzWlWFmb/J3cn08ZzdihnRZpnZCYKBX0Vgz4mnALh10XPd+o65bDVG+hh4Q6zV3Nl7MKzoGsHsWmompVdpDO3xhUJMSd+rVxhtFISFDEIBUSG4N5Fu8ALO0AuKZUHW2fhzc0hsGlu207r8m3Lnh4CvFraU2C0THM1QpuyG+yar1Z2iDgA4U9iVlgHjv1xA2Alww2lUm/Y41qDtn8BdNh32IFD69+G8v/f6DwtHCvJ82iHuV0IdVTG5lh6qHBiJb0nHOQFV+JitbwI7QffkYIvcFUXBKOcFgtj0fglVkppb+zW/K5QfWJulIZQch7+9zYNrEXp5J8+AFg9Ew2c1xsk2gBkHxS54+iyurG5g7dMeuDejW1RkyQrYV+7NYpiuUKgu9TKm/D21iO7By3aKL+C3If0Jidf1gmGo7thyT5dFPNcb8nNS9fMSqAslOnAP4Q69gA8fHKYXXg5BgZyuJJXVjLa21cwG1fWav936FElotdsclyXcC4dk=
   file_glob: true
-  file: frangiclave-mod-manager-$TRAVIS_TAG.*
+  file: /tmp/frangiclave-build/artifacts/*
   skip_cleanup: true
   on:
     repo: frangiclave/frangiclave-mod-manager

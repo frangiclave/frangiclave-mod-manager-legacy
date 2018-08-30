@@ -11,6 +11,15 @@ else
 fi
 export MM_PATCH_DIR=${MM_DIR}/data/patch
 
+# Get the current operating system
+if [ "$(uname)" == "Darwin" ]; then
+    export OS="macos"
+elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+    export OS="linux"
+else
+    export OS="unknown"
+fi
+
 export BUILD_DIR=/tmp/frangiclave-build
 
 export MONOMOD_DIR=${BUILD_DIR}/MonoMod
@@ -20,6 +29,8 @@ export PATCH_DIR=${BUILD_DIR}/frangiclave-patch
 export PATCH_MONOMOD_DIR=${PATCH_DIR}/MonoMod
 export PATCH_CS_DIR=${PATCH_DIR}/CultistSimulator
 export PATCH_BIN_DIR=${PATCH_DIR}/Assembly-CSharp/bin/Release
+
+export ARTIFACT_DIR=${BUILD_DIR}/artifacts/
 
 # Prepare the build directory
 echo "Preparing build directory"
@@ -59,7 +70,7 @@ cd ${MM_DIR}
 cp ${PATCH_BIN_DIR}/*.dll ${MM_PATCH_DIR}
 cp ${PATCH_BIN_DIR}/*.exe ${MM_PATCH_DIR}
 cargo build -q --release
-cp target/release/frangiclave-mod-manager target/release/frangiclave-mod-manager-$TARGET
+cp target/release/frangiclave-mod-manager ${ARTIFACT_DIR}/frangiclave-mod-manager-${OS}
 
 echo "Complete"
 
