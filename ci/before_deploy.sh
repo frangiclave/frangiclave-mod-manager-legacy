@@ -84,6 +84,9 @@ else
     cp target/release/frangiclave-mod-manager ${ARTIFACT_DIR}/frangiclave-mod-manager-${OS}
 fi
 
+# Bundle the patch and MonoMod too, for cases where the mod manager fails
+zip -9 ${ARTIFACT_DIR}/frangiclave-patch-${OS}.zip ${MM_PATCH_DIR}/*
+
 echo "Complete"
 
 set +e

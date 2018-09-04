@@ -28,7 +28,6 @@ before_cache:
 
 branches:
   only:
-    - master
     - "/^v\\d+\\.\\d+\\.\\d+.*$/"
 
 deploy:
