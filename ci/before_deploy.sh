@@ -38,6 +38,7 @@ export ARTIFACT_DIR=${BUILD_DIR}/artifacts
 echo "Preparing build directory"
 rm -rf ${BUILD_DIR}
 mkdir ${BUILD_DIR}
+mkdir ${ARTIFACT_DIR}
 cd ${BUILD_DIR}
 
 # Fetch sources
@@ -46,11 +47,13 @@ git clone -q https://github.com/0x0ade/MonoMod
 echo "Fetching frangiclave-patch"
 git clone -q https://gitlab.com/frangiclave/frangiclave-patch
 
-# Build MonoMod
+# Build MonoMod and bundle Mono together with it for easier distribution
 echo "Building MonoMod"
 cd ${MONOMOD_DIR}
 nuget restore -NonInteractive -Verbosity quiet
 msbuild /p:Configuration=Release /clp:ErrorsOnly
+cd ${MONOMOD_BIN_DIR}
+mkbundle --simple MonoMod.exe --no-machine-config --no-config -o MonoMod_bundled.exe
 
 # Get Cultist Simulator DLLs
 echo "Fetching Cultist Simulator DLLs"
@@ -66,14 +69,20 @@ cp ${MONOMOD_BIN_DIR}/*.dll ${PATCH_MONOMOD_DIR}
 cp ${MONOMOD_BIN_DIR}/MonoMod.exe ${PATCH_MONOMOD_DIR}
 msbuild /p:Configuration=Release /clp:ErrorsOnly
 
-# Build the Mod Manager
+# Build the Mod Manager, copying the version of MonoMod with Mono bundled for
+# portability
 echo "Building Frangiclave Mod Manager"
 cd ${MM_DIR}
 cp ${PATCH_BIN_DIR}/*.dll ${MM_PATCH_DIR}
-cp ${PATCH_BIN_DIR}/*.exe ${MM_PATCH_DIR}
-cargo build -q --release
-mkdir ${ARTIFACT_DIR}
-cp target/release/frangiclave-mod-manager ${ARTIFACT_DIR}/frangiclave-mod-manager-${OS}
+cp ${MONOMOD_BIN_DIR}/MonoMod_bundled.exe ${MM_PATCH_DIR}/MonoMod.exe
+if [ ${OS} == "linux" ]
+then
+    cargo build -q --release --target x86_64-unknown-linux-musl
+    cp target/x86_64-unknown-linux-musl/release/frangiclave-mod-manager ${ARTIFACT_DIR}/frangiclave-mod-manager-${OS}
+else
+    cargo build -q --release
+    cp target/release/frangiclave-mod-manager ${ARTIFACT_DIR}/frangiclave-mod-manager-${OS}
+fi
 
 echo "Complete"
 
