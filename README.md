@@ -8,6 +8,8 @@ It depends on [frangiclave-patch](https://gitlab.com/frangiclave/frangiclave-pat
 
 License: ![CC0](https://licensebuttons.net/p/zero/1.0/88x15.png "CC0")
 
+The mod manager bundles [MonoMod](https://github.com/0x0ade/MonoMod), which is licensed under the [MIT license](https://github.com/0x0ade/MonoMod/blob/master/LICENSE).
+
 ## Building
 
 In order to build the application, you will need to have installed [Rust](https://www.rust-lang.org/) on your system, and then to follow these steps:
