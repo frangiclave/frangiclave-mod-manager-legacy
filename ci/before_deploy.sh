@@ -5,7 +5,7 @@ set -e
 # Try to find the source used for this deploy
 if [ -z ${TRAVIS_BUILD_DIR+x} ]
 then
-    export MM_DIR=$(PWD)
+    export MM_DIR=$(pwd)
 else
     export MM_DIR=${TRAVIS_BUILD_DIR}
 fi
@@ -45,7 +45,7 @@ cd ${BUILD_DIR}
 echo "Fetching MonoMod"
 git clone -q https://github.com/0x0ade/MonoMod
 echo "Fetching frangiclave-patch"
-git clone -q https://gitlab.com/frangiclave/frangiclave-patch
+git clone -q https://github.com/frangiclave/frangiclave-patch
 
 # Build MonoMod and bundle Mono together with it for easier distribution
 echo "Building MonoMod"
@@ -85,7 +85,8 @@ else
 fi
 
 # Bundle the patch and MonoMod too, for cases where the mod manager fails
-zip -9 ${ARTIFACT_DIR}/frangiclave-patch-${OS}.zip ${MM_PATCH_DIR}/*
+cd ${MM_PATCH_DIR}
+zip -9 ${ARTIFACT_DIR}/frangiclave-patch-${OS}.zip *.dll *.exe
 
 echo "Complete"
 
