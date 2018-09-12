@@ -82,12 +82,22 @@ impl Game {
         };
 
         // Run MonoMod to patch the clean assembly.
-        match Command::new(dir.path().join("MonoMod.exe"))
-            .arg("--dependency-missing-throw=0")
-            .arg("Assembly-CSharp.dll")
-            .current_dir(dir.path())
-            .output()
-        {
+        let command = if cfg!(unix) {
+            Command::new("mono")
+                .arg(dir.path().join("MonoMod.exe"))
+                .arg("--dependency-missing-throw=0")
+                .arg("Assembly-CSharp.dll")
+                .current_dir(dir.path())
+                .output()
+        } else {
+            Command::new(dir.path().join("MonoMod.exe"))
+                .arg("--dependency-missing-throw=0")
+                .arg("Assembly-CSharp.dll")
+                .current_dir(dir.path())
+                .output()
+        };
+
+        match command {
             Ok(output) => {
                 if !output.status.success() {
                     return Err(format!(
