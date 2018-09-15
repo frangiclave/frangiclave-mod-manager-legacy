@@ -39,20 +39,13 @@ pub fn setup_patch_directory(managed_path: &Path) -> io::Result<TempDir> {
         let path = dir_entry.unwrap().path();
         let file_name = path.file_name().unwrap().to_str().unwrap();
 
-        // Don't copy the original Assembly-CSharp.dll, as it may have already been patched and
-        // should not be patched over.
+        // Don't copy the backup Assembly-CSharp.dll, as it won't be used.
         // Also ensure only DLLs are copied, to avoid unnecessary copies.
-        if file_name == "Assembly-CSharp.dll" || !file_name.ends_with(".dll") {
+        if file_name == "Assembly-CSharp-backup.dll" || !file_name.ends_with(".dll") {
             continue;
         }
         fs::copy(&path, dir.path().join(file_name))?;
     }
-
-    // Use the backup as the basis for the patch.
-    fs::copy(
-        dir.path().join("Assembly-CSharp-backup.dll"),
-        dir.path().join("Assembly-CSharp.dll"),
-    )?;
 
     // Copy the MonoMod files and the actual patch itself.
     // We do this afterwards, in case some older versions of MonoMod's files were already in the

@@ -134,7 +134,8 @@ fn patch_game(game: &Game) {
             return;
         }
     }
-    println!("Patch successful.")
+    println!("Patch successful.");
+    println!("You will need to run this command again whenever Cultist Simulator is updated.");
 }
 
 fn install_mod(game: &Game, command: &str) {

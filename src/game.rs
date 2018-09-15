@@ -61,19 +61,15 @@ impl Game {
     }
 
     pub fn patch_assembly(&self) -> Result<(), String> {
-        // If no backup assembly exists, create one, then use the backup assembly as a basis for the
-        // patch.
-        // This is to prevent double-patching the assembly.
-        if !self.assembly_backup_path.is_file() {
-            match fs::copy(&self.assembly_path, &self.assembly_backup_path) {
-                Ok(_) => (),
-                Err(e) => {
-                    return Err(format!(
-                        "Failed to copy {}: {}",
-                        &self.assembly_path.display(),
-                        e
-                    ))
-                }
+        // Make a backup assembly in case something goes wrong
+        match fs::copy(&self.assembly_path, &self.assembly_backup_path) {
+            Ok(_) => (),
+            Err(e) => {
+                return Err(format!(
+                    "Failed to copy {}: {}",
+                    &self.assembly_path.display(),
+                    e
+                ))
             }
         }
         let dir = match patch::setup_patch_directory(&self.managed_path) {
