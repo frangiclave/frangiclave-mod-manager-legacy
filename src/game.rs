@@ -101,7 +101,8 @@ impl Game {
             Ok(output) => {
                 if !output.status.success() {
                     return Err(format!(
-                        "MonoMod failed to patch Assembly-CSharp.dll: {}",
+                        "MonoMod failed to patch Assembly-CSharp.dll: {}{}",
+                        str::from_utf8(&output.stdout).unwrap(),
                         str::from_utf8(&output.stderr).unwrap()
                     ));
                 }
