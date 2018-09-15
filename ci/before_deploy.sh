@@ -12,11 +12,9 @@ fi
 export MM_PATCH_DIR=${MM_DIR}/data/patch
 
 # Get the current operating system
-if [ "$(uname)" == "Darwin" ]
-then
+if [ "$(uname)" == "Darwin" ]; then
     export OS="macos"
-elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]
-then
+elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
     export OS="linux"
 else
     export OS="unknown"
@@ -50,6 +48,7 @@ git clone -q https://github.com/frangiclave/frangiclave-patch
 # Build MonoMod and bundle Mono together with it for easier distribution
 echo "Building MonoMod"
 cd ${MONOMOD_DIR}
+git checkout -q fb426668bee376aa011d7fd1abe90ef0f11f89f3
 nuget restore -NonInteractive -Verbosity quiet
 msbuild /p:Configuration=Release /clp:ErrorsOnly
 cd ${MONOMOD_BIN_DIR}
@@ -82,6 +81,7 @@ else
     cargo build --release
     cp target/release/frangiclave-mod-manager ${ARTIFACT_DIR}/frangiclave-mod-manager-${OS}
 fi
+chmod +x ${ARTIFACT_DIR}/frangiclave-mod-manager-${OS}
 
 # Bundle the patch and MonoMod too, for cases where the mod manager fails
 cd ${MM_PATCH_DIR}
@@ -90,3 +90,4 @@ zip -9 ${ARTIFACT_DIR}/frangiclave-patch-${OS}.zip *.dll *.exe
 echo "Complete"
 
 set +e
+

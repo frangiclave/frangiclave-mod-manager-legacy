@@ -1,7 +1,5 @@
 language: rust
 sudo: required
-git:
-  quiet: true
 
 matrix:
   include:
@@ -12,7 +10,7 @@ matrix:
       env: TARGET=x86_64-apple-darwin
 
 before_install:
-- bash ci/before_install.sh
+  - bash ci/before_install.sh
 
 install:
   - bash ci/install.sh
@@ -40,3 +38,4 @@ deploy:
   on:
     repo: frangiclave/frangiclave-mod-manager
     tags: true
+
