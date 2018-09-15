@@ -45,21 +45,31 @@ fn main() {
         )
         .get_matches();
     let game_directory = arguments.value_of("game_directory").unwrap_or(".");
+    let mut search_path = PathBuf::from(game_directory);
     show_welcome_message();
 
-    // Load the game directory information, checking if the working directory is a valid game
-    // directory first.
-    let game = Game::new(&PathBuf::from(game_directory));
-    if !game.is_valid() {
-        eprintln!(
-            "ERROR: Cultist Simulator not detected in working directory. This program must be run \
-             from the root of your game's directory."
-        );
-        println!("Press Enter key to exit...");
-        let mut stdin = std::io::stdin();
-        stdin.read(&mut [0u8]).unwrap();
-    } else {
-        command_loop(&game);
+    // Try to locate the root of the game directory if we're not already there, then load the game
+    // directory information.
+    loop {
+        let game = Game::new(&search_path);
+        if game.is_valid() {
+            command_loop(&game);
+            break;
+        } else {
+            search_path = match search_path.parent() {
+                Some(parent) => parent,
+                None => {
+                    eprintln!(
+                        "ERROR: Cultist Simulator not detected in directory. This program must be \
+                         run from somewhere within your game's directory."
+                    );
+                    println!("Press Enter key to exit...");
+                    let mut stdin = std::io::stdin();
+                    stdin.read(&mut [0u8]).unwrap();
+                    break;
+                }
+            }.to_owned();
+        }
     }
 }
 

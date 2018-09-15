@@ -35,13 +35,13 @@ impl Game {
     pub fn new(root: &PathBuf) -> Game {
         let exe_path;
         let data_path;
-        if cfg!(all(target_os="windows", target_arch="x86_64")) {
+        if cfg!(all(target_os = "windows", target_arch = "x86_64")) {
             exe_path = root.join(WINDOWS_EXE_PATH);
             data_path = root.join(WINDOWS_DATA_PATH);
-        } else if cfg!(all(target_os="macos", target_arch="x86_64")) {
+        } else if cfg!(all(target_os = "macos", target_arch = "x86_64")) {
             exe_path = root.join(MACOS_EXE_PATH);
             data_path = root.join(MACOS_DATA_PATH);
-        } else if cfg!(all(target_os="linux", target_arch="x86_64")) {
+        } else if cfg!(all(target_os = "linux", target_arch = "x86_64")) {
             exe_path = root.join(LINUX_EXE_PATH);
             data_path = root.join(LINUX_DATA_PATH);
         } else {
