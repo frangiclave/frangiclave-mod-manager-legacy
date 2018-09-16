@@ -1,6 +1,6 @@
 [package]
 name = "frangiclave-mod-manager"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Lyrositor <gagne.marc@gmail.com>"]
 publish = false
 

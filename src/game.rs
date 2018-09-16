@@ -11,10 +11,10 @@ use std::str;
 
 const WINDOWS_EXE_PATH: &'static str = "cultistsimulator.exe";
 const MACOS_EXE_PATH: &'static str = "Contents/MacOS/OSX";
-const LINUX_EXE_PATH: &'static str = "CS.x86_64";
+const LINUX_EXE_PATH: &'static str = "CS.x86";
 const WINDOWS_DATA_PATH: &'static str = "cultistsimulator_Data/";
 const MACOS_DATA_PATH: &'static str = "Contents/Resources/Data/";
-const LINUX_DATA_PATH: &'static str = "CS.x86_64_Data/";
+const LINUX_DATA_PATH: &'static str = "CS_Data/";
 
 const MANAGED_PATH: &'static str = "Managed/";
 const ASSEMBLY_PATH: &'static str = "Managed/Assembly-CSharp.dll";
@@ -35,13 +35,13 @@ impl Game {
     pub fn new(root: &PathBuf) -> Game {
         let exe_path;
         let data_path;
-        if cfg!(all(target_os = "windows", target_arch = "x86_64")) {
+        if cfg!(all(target_os="windows", target_arch="x86_64")) {
             exe_path = root.join(WINDOWS_EXE_PATH);
             data_path = root.join(WINDOWS_DATA_PATH);
-        } else if cfg!(all(target_os = "macos", target_arch = "x86_64")) {
+        } else if cfg!(all(target_os="macos", target_arch="x86_64")) {
             exe_path = root.join(MACOS_EXE_PATH);
             data_path = root.join(MACOS_DATA_PATH);
-        } else if cfg!(all(target_os = "linux", target_arch = "x86_64")) {
+        } else if cfg!(all(target_os="linux", target_arch="x86_64")) {
             exe_path = root.join(LINUX_EXE_PATH);
             data_path = root.join(LINUX_DATA_PATH);
         } else {
@@ -61,15 +61,19 @@ impl Game {
     }
 
     pub fn patch_assembly(&self) -> Result<(), String> {
-        // Make a backup assembly in case something goes wrong
-        match fs::copy(&self.assembly_path, &self.assembly_backup_path) {
-            Ok(_) => (),
-            Err(e) => {
-                return Err(format!(
-                    "Failed to copy {}: {}",
-                    &self.assembly_path.display(),
-                    e
-                ))
+        // If no backup assembly exists, create one, then use the backup assembly as a basis for the
+        // patch.
+        // This is to prevent double-patching the assembly.
+        if !self.assembly_backup_path.is_file() {
+            match fs::copy(&self.assembly_path, &self.assembly_backup_path) {
+                Ok(_) => (),
+                Err(e) => {
+                    return Err(format!(
+                        "Failed to copy {}: {}",
+                        &self.assembly_path.display(),
+                        e
+                    ))
+                }
             }
         }
         let dir = match patch::setup_patch_directory(&self.managed_path) {
@@ -97,8 +101,7 @@ impl Game {
             Ok(output) => {
                 if !output.status.success() {
                     return Err(format!(
-                        "MonoMod failed to patch Assembly-CSharp.dll: {}{}",
-                        str::from_utf8(&output.stdout).unwrap(),
+                        "MonoMod failed to patch Assembly-CSharp.dll: {}",
                         str::from_utf8(&output.stderr).unwrap()
                     ));
                 }
