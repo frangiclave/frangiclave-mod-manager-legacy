@@ -75,6 +75,7 @@ fn main() {
 
 fn show_welcome_message() {
     println!("{}", LOGO);
+    println!("Version: {}", env!("CARGO_PKG_VERSION"));
 }
 
 fn command_loop(game: &Game) {
