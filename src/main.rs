@@ -100,7 +100,7 @@ fn command_loop(game: &Game) {
                 'p' => patch_game(game),
                 'i' => install_mod(game, command.as_ref()),
                 'u' => update_mods(),
-                'r' => remove_mod(),
+                'r' => remove_mod(game, command.as_ref()),
                 'x' => break,
                 _ => eprintln!(
                     "Invalid command name '{}', must be one of the following: p, i, u, r, x",
@@ -152,7 +152,7 @@ fn install_mod(game: &Game, command: &str) {
     let repo = match Repo::new() {
         Ok(r) => r,
         Err(e) => {
-            eprintln!("Failed to create prepare repository: {}", e);
+            eprintln!("Failed to prepare repository: {}", e);
             return;
         }
     };
@@ -173,6 +173,17 @@ fn update_mods() {
     println!("Updating mods is not implemented yet.");
 }
 
-fn remove_mod() {
-    println!("Removing mods is not implemented yet.");
+fn remove_mod(game: &Game, command: &str) {
+    // Get the mod ID as the only argument
+    let args: Vec<&str> = command.split(' ').collect();
+    if args.len() != 2 {
+        eprintln!("Invalid number of arguments specified. Usage: r <mod_id>");
+        return;
+    }
+    let mod_id = args[1];
+
+    match game.remove_mod(mod_id) {
+        Ok(_) => println!("Successfully removed {}", mod_id),
+        Err(e) => eprintln!("There was an error removing the mod: {}", e),
+    }
 }

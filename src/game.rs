@@ -154,6 +154,11 @@ impl Game {
     pub fn make_mods_dir(&self) -> io::Result<()> {
         fs::create_dir_all(&self.mods_path)
     }
+
+    pub fn remove_mod(&self, mod_id: &str) -> io::Result<()> {
+        let mod_path = self.mods_path.join(mod_id);
+        fs::remove_dir_all(mod_path)
+    }
 }
 
 pub struct Mod {
